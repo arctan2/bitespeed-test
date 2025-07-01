@@ -46,19 +46,19 @@ func registerTLSConfig() error {
 func DbConn() *sql.DB {
 	var db *sql.DB
 
-	user, present := os.LookupEnv("USER")
+	user, present := os.LookupEnv("DB_USER")
 	if !present {
-		log.Fatal("USER not set")
+		log.Fatal("DB_USER not set")
 	}
 
-	pwd, present := os.LookupEnv("PWD")
+	pwd, present := os.LookupEnv("DB_PASSWORD")
 	if !present {
-		log.Fatal("PWD not set")
+		log.Fatal("DB_PASSWORD not set")
 	}
 
-	addr, present := os.LookupEnv("ADDR")
+	addr, present := os.LookupEnv("DB_ADDR")
 	if !present {
-		log.Fatal("ADDR not set")
+		log.Fatal("DB_ADDR not set")
 	}
 
 	dbname, present := os.LookupEnv("DB_NAME")
@@ -74,10 +74,6 @@ func DbConn() *sql.DB {
     cfg.DBName = dbname
 	cfg.ParseTime = true
 	cfg.TLSConfig = TLS_NAME
-
-	fmt.Println(cfg.User)
-	fmt.Println(cfg.Passwd)
-	fmt.Println(cfg.Addr)
 
 	err := registerTLSConfig()
 	if err != nil {
