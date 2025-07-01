@@ -20,6 +20,8 @@ func registerTLSConfig() error {
 	if !present {
 		log.Fatal("CERT_PATH not set")
 	}
+
+	fmt.Println("registering: ", certPath)
 	
 	pem, err := os.ReadFile(certPath)
 	if err != nil {
@@ -37,6 +39,7 @@ func registerTLSConfig() error {
 	if err != nil {
 		return fmt.Errorf("failed to register TLS config: %w", err)
 	}
+	fmt.Println("registered tls!")
 	return nil
 }
 
@@ -72,6 +75,10 @@ func DbConn() *sql.DB {
 	cfg.ParseTime = true
 	cfg.TLSConfig = TLS_NAME
 
+	fmt.Println(cfg.User)
+	fmt.Println(cfg.Passwd)
+	fmt.Println(cfg.Addr)
+
 	err := registerTLSConfig()
 	if err != nil {
 		log.Fatal("TLS setup failed:", err)
@@ -85,7 +92,7 @@ func DbConn() *sql.DB {
 
     pingErr := db.Ping()
     if pingErr != nil {
-		fmt.Println(pingErr.Error())
+		fmt.Println("ping error:", pingErr.Error())
 		return nil
     }
 
