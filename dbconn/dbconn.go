@@ -1,6 +1,8 @@
 package dbconn
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"fmt"
 	"log"
@@ -8,6 +10,35 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 )
+
+var TLS_NAME = "my_custom_tls"
+
+func registerTLSConfig() error {
+	rootCertPool := x509.NewCertPool()
+
+	certPath, present := os.LookupEnv("CERT_PATH")
+	if !present {
+		log.Fatal("CERT_PATH not set")
+	}
+	
+	pem, err := os.ReadFile(certPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA file: %w", err)
+	}
+	if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+		return fmt.Errorf("failed to append CA cert")
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs: rootCertPool,
+	}
+
+	err = mysql.RegisterTLSConfig(TLS_NAME, tlsConfig)
+	if err != nil {
+		return fmt.Errorf("failed to register TLS config: %w", err)
+	}
+	return nil
+}
 
 func DbConn() *sql.DB {
 	var db *sql.DB
@@ -32,11 +63,6 @@ func DbConn() *sql.DB {
 		log.Fatal("DB_NAME not set")
 	}
 
-	// cert, present := os.LookupEnv("CERT")
-	// if !present {
-	// 	log.Fatal("DB_NAME not set")
-	// }
-
     cfg := mysql.NewConfig()
     cfg.User = user
     cfg.Passwd = pwd
@@ -44,9 +70,13 @@ func DbConn() *sql.DB {
     cfg.Addr = addr
     cfg.DBName = dbname
 	cfg.ParseTime = true
+	cfg.TLSConfig = TLS_NAME
 
-    // Get a database handle.
-    var err error
+	err := registerTLSConfig()
+	if err != nil {
+		log.Fatal("TLS setup failed:", err)
+	}
+
     db, err = sql.Open("mysql", cfg.FormatDSN())
     if err != nil {
 		fmt.Println("Unable to make DB connection")
